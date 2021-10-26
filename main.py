@@ -1,33 +1,43 @@
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+import os
 from collections import defaultdict
-from pandas import read_excel
 from datetime import datetime
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-now = datetime.now()
-winery_age = now.year - 1920
+from dotenv import load_dotenv
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from pandas import read_excel
 
-excel_df = read_excel('wine3.xlsx', keep_default_na='')
-wines_list = excel_df.to_dict('records')
 
-wines_dict = defaultdict(list)
-for wine in wines_list:
-    category = wine.pop('Категория')
-    wines_dict[category].append(wine)
+def main():
+    load_dotenv()
+    FOUNDATION_YEAR = int(os.getenv('FOUNDATION_YEAR', default=1920))
+    PATH_TO_WINES_FILE = os.getenv('PATH_TO_WINES_FILE')
 
-categories = list(wines_dict)
-categories.sort()
+    now_date = datetime.now()
+    winery_age = now_date.year - FOUNDATION_YEAR
 
-env = Environment(
-    loader=FileSystemLoader('.'),
-    autoescape=select_autoescape(['html', 'xml'])
-)
+    wines = read_excel(PATH_TO_WINES_FILE, keep_default_na='')
+    wines_dict = wines.to_dict('records')
 
-template = env.get_template('template.html')
-rendered_page = template.render(winery_age=winery_age, wine_dict=wines_dict, categories=categories)
+    wines = defaultdict(list)
+    for wine in wines_dict:
+        category = wine.pop('Категория')
+        wines[category].append(wine)
 
-with open('index.html', 'w', encoding="utf8") as file:
-    file.write(rendered_page)
+    env = Environment(
+        loader=FileSystemLoader('.'),
+        autoescape=select_autoescape(['html', 'xml'])
+    )
 
-server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
-server.serve_forever()
+    template = env.get_template('template.html')
+    rendered_page = template.render(winery_age=winery_age, wines=wines)
+
+    with open('index.html', 'w', encoding="utf8") as file:
+        file.write(rendered_page)
+
+    server = HTTPServer(('0.0.0.0', 8000), SimpleHTTPRequestHandler)
+    server.serve_forever()
+
+
+if __name__ == '__main__':
+    main()
