@@ -3,3 +3,4 @@ env/
 /venv/
 index.html
 .env
+/wines.xlsx

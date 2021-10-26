@@ -17,10 +17,10 @@ def main():
     winery_age = now_date.year - FOUNDATION_YEAR
 
     wines = read_excel(PATH_TO_WINES_FILE, keep_default_na='')
-    wines_dict = wines.to_dict('records')
+    wines_list = wines.to_dict('records')
 
     wines = defaultdict(list)
-    for wine in wines_dict:
+    for wine in wines_list:
         category = wine.pop('Категория')
         wines[category].append(wine)
 
