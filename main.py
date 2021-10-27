@@ -10,19 +10,17 @@ from pandas import read_excel
 
 def main():
     load_dotenv()
-    FOUNDATION_YEAR = int(os.getenv('FOUNDATION_YEAR', default=1920))
-    PATH_TO_WINES_FILE = os.getenv('PATH_TO_WINES_FILE')
+    foundation_year = int(os.getenv('FOUNDATION_YEAR', default=1920))
+    path_to_wines_file = os.getenv('PATH_TO_WINES_FILE')
 
     now_date = datetime.now()
-    winery_age = now_date.year - FOUNDATION_YEAR
+    winery_age = now_date.year - foundation_year
 
-    wines = read_excel(PATH_TO_WINES_FILE, keep_default_na='')
-    wines_list = wines.to_dict('records')
-
-    wines = defaultdict(list)
-    for wine in wines_list:
+    wines = read_excel(path_to_wines_file, keep_default_na='').to_dict('records')
+    grouped_wines = defaultdict(list)
+    for wine in wines:
         category = wine.pop('Категория')
-        wines[category].append(wine)
+        grouped_wines[category].append(wine)
 
     env = Environment(
         loader=FileSystemLoader('.'),
@@ -30,7 +28,7 @@ def main():
     )
 
     template = env.get_template('template.html')
-    rendered_page = template.render(winery_age=winery_age, wines=wines)
+    rendered_page = template.render(winery_age=winery_age, grouped_wines=grouped_wines)
 
     with open('index.html', 'w', encoding="utf8") as file:
         file.write(rendered_page)
